@@ -6,7 +6,7 @@ provider "aws" {
 # ------------------------- KEY PAIR -------------------------
 resource "aws_key_pair" "key_pair" {
   key_name   = "MyKey"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC2dlxKnmfweH+cDrw9qCr/YFR+I/RS/Vkain0vLlm4OAyeZpmZS0xKkmTvDSHQXKqakY5USTP2EfT0rBjWkFJj4YjlxGhp3mpoDk9kq84Vt1M74CgECDJl2qfXqK7pJ5iPuaq0wA/nAHv79HwJrdmMBxIq7W/Fq7CJLbXAVJT6lTOGlutS71Ruko50qnGVQMhSvhLGFlQATi8mSWetIEjRELrj46HoNfCs+ubo5yD/ICsXMN1eaxtLKkK9wRGBgz1OM2KyLLwLEw7fd4L+D1OutA2/4+6ak9VJqOGc5rCn1wr8QlosIWIGoEifSlsvUHPmi9WjpUMdks0gmHzumicLFtV7y/dmV1IhJeyRC02jtypZUk6sbdXY2tvSfFehykCgrBu5ByR0s85AMJH5Gr8xczrfH6nU0xYDiUAXER8enb4XPOk5ea4kZcaFdykf/sPgfB8FT+aCE59Y6H0gWmG8ehw98Cj2RLvl2xG+SDcGbF0JrMF8f8JJ5zBVq8wN6ZE= Dell@MADHU-KIRAN"
+  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCyICa6xtvZ2Qma19fe4Z0Fvdzdz6sFAOPRL3S2LsAi2Cm/+1Yh2Un2t3SAO4QZZYlQKFarGuS6Z7FYwehHk1gcPsADK/oHP1rWsyQ2HGlQixipVZN3Uq48gC362iPGZJbPmvvHcDOjnVN10xe0RKSSeqcSCFcdgdOA6zOnvsj0TROD92UZJg/3cLirg+OrskIX9fis249MyE7oRkadp4afY5vfCbnOyDm02YvTSPhZiiZpDxIbODkvE586cZDduWXPr+6h/g1aBDoinJiRIiP0LJZhOUbJHtx2vuIICgpygQzewhQ21JhprShSlrSg1qfki44nG+R2evZyhYF9Ka7A9z4r8MVAww//0IAWVej7o5hVRKBz0zAhagCvq9fqYmLhHV7DSJJmIA730J15d3cFLcjAHwsrEeHzXcRxQmqo8hCHKX27W8Tmnv9MNMFmkW+Rkysvr9nGPEJLCeHmzPTXuAfczFAnKqI0BX6WDj6uBBSN7ZgO6S9WdDsCKjzQn2E= prudh@Prudhvi"
 }
 
 # ------------------------- VPC -------------------------
@@ -137,7 +137,7 @@ resource "aws_security_group" "myapp_sg" {
 # ------------------------- JENKINS INSTANCE -------------------------
 resource "aws_instance" "jenkins" {
   ami                    = "ami-0fa3fe0fa7920f68e"
-  instance_type          = "t2.large"
+  instance_type          = "m7i-flex.large"
   subnet_id              = aws_subnet.public_subnet.id
   key_name               = aws_key_pair.key_pair.key_name
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
@@ -153,8 +153,8 @@ resource "aws_instance" "jenkins" {
     inline = [
       "sudo yum update -y",
       "sudo yum install wget git maven ansible docker -y",
-      "sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo",
-      "sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key",
+      "sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/rpm-stable/jenkins.repo",
+      "sudo rpm --import https://pkg.jenkins.io/rpm-stable/jenkins.io-2026.key",
       "sudo yum install jenkins -y",
       "sudo systemctl enable jenkins && sudo systemctl start jenkins",
       "sudo systemctl enable docker && sudo systemctl start docker",
@@ -172,7 +172,7 @@ resource "aws_instance" "jenkins" {
 # ------------------------- MyApp INSTANCE -------------------------
 resource "aws_instance" "myapp" {
   ami                    = "ami-0fa3fe0fa7920f68e"
-  instance_type          = "t2.micro"
+  instance_type          = "t3.micro"
   subnet_id              = aws_subnet.public_subnet.id
   key_name               = aws_key_pair.key_pair.key_name
   vpc_security_group_ids = [aws_security_group.myapp_sg.id]
