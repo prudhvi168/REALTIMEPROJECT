@@ -13,10 +13,11 @@ sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 install eksctl
 ===================
 curl -sSL "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz" -o eksctl.tar.gz
+
 tar -xzf eksctl.tar.gz
+
 sudo mv eksctl /usr/local/bin/
+
 eksctl version
-
-
 
 eksctl create cluster --name mcappcluster --nodegroup-name mcng --node-type t3.micro --nodes 8 --managed
