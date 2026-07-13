@@ -19,13 +19,20 @@ pipeline {
 
         stage('Sonar Scan') {
             steps {
+                script {
                 echo 'Running SonarQube scan'
+                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+                    // some block
+
                 sh '''
                     cd Application
                     mvn sonar:sonar \
-                      -Dsonar.host.url=http://13.222.21.154:9000\
-                      -Dsonar.login=squ_9a403f49d7861204dc4af3be267137ddec3a0181
-                '''
+                      -Dsonar.host.url=http://32.192.178.116:9000\
+                      -Dsonar.login=$SONAR_TOKEN
+                '''    
+                }     
+                }      
+                
             }
         }
 

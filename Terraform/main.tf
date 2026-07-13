@@ -1,181 +1,198 @@
 provider "aws" {
-  profile = "default"
-  region  = "us-east-1"
+
+    region = "us-east-1"
+  
 }
 
-# ------------------------- KEY PAIR -------------------------
-resource "aws_key_pair" "key_pair" {
-  key_name   = "MyKey"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCyICa6xtvZ2Qma19fe4Z0Fvdzdz6sFAOPRL3S2LsAi2Cm/+1Yh2Un2t3SAO4QZZYlQKFarGuS6Z7FYwehHk1gcPsADK/oHP1rWsyQ2HGlQixipVZN3Uq48gC362iPGZJbPmvvHcDOjnVN10xe0RKSSeqcSCFcdgdOA6zOnvsj0TROD92UZJg/3cLirg+OrskIX9fis249MyE7oRkadp4afY5vfCbnOyDm02YvTSPhZiiZpDxIbODkvE586cZDduWXPr+6h/g1aBDoinJiRIiP0LJZhOUbJHtx2vuIICgpygQzewhQ21JhprShSlrSg1qfki44nG+R2evZyhYF9Ka7A9z4r8MVAww//0IAWVej7o5hVRKBz0zAhagCvq9fqYmLhHV7DSJJmIA730J15d3cFLcjAHwsrEeHzXcRxQmqo8hCHKX27W8Tmnv9MNMFmkW+Rkysvr9nGPEJLCeHmzPTXuAfczFAnKqI0BX6WDj6uBBSN7ZgO6S9WdDsCKjzQn2E= prudh@Prudhvi"
+resource "aws_key_pair" "kp" {
+    public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCX1V8xG/4LAoXv0BL1ddlE+NKjQuGOl8mdKsZxFrKf6vKgs60QKTySa3S1guUQp8Tvw7JO0CUy0GNB+GX/9TkpxtOcr4iGvPHSUG2eokLDavhKHT7VuipUMJSz1kxbjKh6DONkrGt+JXXbUhVpoEFzBWVVABuzhv6rjj31zeCdK1TGak2E0BTRSpm4d3gRfRoDCLZpsMf1SX3KMpcg3FdxFGOX4XLyxlTjiT9PyYRlHjP2o4OG4343fa+c98O3ZsXbuD0Vr39Mcb4SSKyFL98t9W37vnWusKhUJutMcwvbEUBfP0n01Tafkc49gfMxgsNHwiL6xkLRGqeD6iODR59pwL8JGe0590wImj0LnXukhS7d8j2No4xoRj8q+kKYZWTxeTgOac8KT9cgo/L2WUqJW5fFaVhehZVukrMchJ1vgFnTZmlHT2w0rpe3M7E0UPaOOIJ5S1T1n0fEAEjUjjuE4QSl8erFmk90qp/IEIRtTZq8PO+3LCwhe75BXoN6gSk= prudh@Prudhvi"
+    key_name = "my-key"
+  
 }
 
-# ------------------------- VPC -------------------------
-resource "aws_vpc" "prod" {
-  cidr_block           = "172.20.0.0/16"
-  enable_dns_hostnames = true
+resource "aws_vpc" "myvpc" {
 
-  tags = { Name = "prod" }
+    cidr_block = "172.20.0.0/16"
+    enable_dns_hostnames = true
+    tags = {
+      Name = "myvpc"
+    }
+  
 }
 
-# ------------------------- SUBNET -------------------------
-resource "aws_subnet" "public_subnet" {
-  vpc_id                  = aws_vpc.prod.id
-  cidr_block              = "172.20.10.0/24"
-  availability_zone       = "us-east-1a"
-  map_public_ip_on_launch = true
+resource "aws_subnet" "pubsnt" {
 
-  tags = { Name = "public-subnet" }
+    vpc_id = aws_vpc.myvpc.id
+    cidr_block = "172.20.1.0/24"
+    availability_zone = "us-east-1a"
+    map_public_ip_on_launch = true
+    tags = {
+      Name = "pubsnt"
+    }
 }
 
-# ------------------------- INTERNET GATEWAY -------------------------
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.prod.id
+    vpc_id = aws_vpc.myvpc.id
 
-  tags = { Name = "prod-igw" }
+    tags = {
+      Name = "igw"
+    }
+  
 }
 
-# ------------------------- ROUTE TABLE -------------------------
-resource "aws_route_table" "public_rt" {
-  vpc_id = aws_vpc.prod.id
+resource "aws_route_table" "pubrt" {
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-  }
-
-  tags = { Name = "public-route-table" }
+    vpc_id = aws_vpc.myvpc.id
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.igw.id
+    }
+    tags = {
+      Name = "pubrt"
+    }
+  
 }
 
-# ------------------------- ROUTE TABLE ASSOCIATION -------------------------
-resource "aws_route_table_association" "public_rt_assoc" {
-  subnet_id      = aws_subnet.public_subnet.id
-  route_table_id = aws_route_table.public_rt.id
+resource "aws_route_table_association" "pubrtassocaition" {
+    subnet_id = aws_subnet.pubsnt.id
+    route_table_id = aws_route_table.pubrt.id
 }
 
-# ------------------------- SECURITY GROUP - JENKINS -------------------------
-resource "aws_security_group" "jenkins_sg" {
-  name        = "jenkins-sg"
-  vpc_id      = aws_vpc.prod.id
-  description = "SG for Jenkins Server"
+resource "aws_security_group" "jenkinssg" {
+    vpc_id = aws_vpc.myvpc.id
+    name = "jenkinssg"
 
-  ingress {
+    ingress {
     description = "Jenkins HTTP"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   ingress {
     description = "Ping"
-    from_port   = -1
-    to_port     = -1
-    protocol    = "icmp"
+    from_port = -1
+    to_port = -1
+    protocol = "icmp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
+   ingress {
+    description = "SonarQube HTTP"
+    from_port   = 9000
+    to_port     = 9000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
+  ingress {
+    description = "ssh"
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
   egress {
-    description = "Allow all outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "allow outbound"
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = { Name = "jenkins-sg" }
+  tags = {
+    Name = "jenkinssg"
+  }
+  
 }
 
-# ------------------------- SECURITY GROUP - MyApp -------------------------
-resource "aws_security_group" "myapp_sg" {
-  name        = "myapp-sg"
-  vpc_id      = aws_vpc.prod.id
-  description = "MyApp SG"
+resource "aws_security_group" "appsg" {
+    vpc_id = aws_vpc.myvpc.id
+    name = "appsg"
 
-  ingress {
-    description = "MyApp Port"
+    ingress {
+    description = "app HTTP"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
+    description = "Ping"
+    from_port = -1
+    to_port = -1
+    protocol = "icmp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   ingress {
-    description = "All Inbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "ssh"
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   egress {
-    description = "Allow all outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "allow outbound"
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = { Name = "myapp-sg" }
-}
-
-# ------------------------- JENKINS INSTANCE -------------------------
-resource "aws_instance" "jenkins" {
-  ami                    = "ami-0fa3fe0fa7920f68e"
-  instance_type          = "m7i-flex.large"
-  subnet_id              = aws_subnet.public_subnet.id
-  key_name               = aws_key_pair.key_pair.key_name
-  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
-
-  connection {
-    type        = "ssh"
-    host        = self.public_ip
-    user        = "ec2-user"
-    private_key = file("~/.ssh/id_rsa")
+  tags = {
+    Name = "appsg"
   }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo yum update -y",
-      "sudo yum install wget git maven ansible docker -y",
-      "sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/rpm-stable/jenkins.repo",
-      "sudo rpm --import https://pkg.jenkins.io/rpm-stable/jenkins.io-2026.key",
-      "sudo yum install jenkins -y",
-      "sudo systemctl enable jenkins && sudo systemctl start jenkins",
-      "sudo systemctl enable docker && sudo systemctl start docker",
-      "sudo usermod -aG docker ec2-user",
-      "sudo usermod -aG docker jenkins",
-      "sudo chmod 666 /var/run/docker.sock",
-      "sudo docker run -d --name sonar -p 9000:9000 sonarqube",
-      "sudo rpm -ivh https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.rpm"
-    ]
-  }
-
-  tags = { Name = "Jenkins-From-Terraform" }
+  
 }
 
-# ------------------------- MyApp INSTANCE -------------------------
-resource "aws_instance" "myapp" {
-  ami                    = "ami-0fa3fe0fa7920f68e"
-  instance_type          = "t3.micro"
-  subnet_id              = aws_subnet.public_subnet.id
-  key_name               = aws_key_pair.key_pair.key_name
-  vpc_security_group_ids = [aws_security_group.myapp_sg.id]
+resource "aws_instance" "jenkinsinst" {
+    ami = "ami-01edba92f9036f76e"
+    instance_type = "c7i-flex.large"
+    key_name = aws_key_pair.kp.key_name
+    subnet_id = aws_subnet.pubsnt.id
+    vpc_security_group_ids = [aws_security_group.jenkinssg.id]
 
-  tags = { Name = "MyApp-From-Terraform" }
+    connection {
+      type = "ssh"
+      host = self.public_ip
+      user = "ec2-user"
+      private_key = file("~/.ssh/id_rsa")
+    }
+
+    provisioner "remote-exec" {
+
+        inline = [ 
+            "sudo yum update -y",
+            "sudo yum install java-21-amazon-corretto -y",
+            "sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo",
+            "sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key",
+            "sudo yum install jenkins -y",
+            "sudo systemctl enable jenkins && sudo systemctl start jenkins",
+            "sudo yum install wget git maven ansible docker -y",
+            "sudo systemctl enable docker && sudo systemctl start docker",
+            "sudo usermod -aG docker ec2-user",
+            "sudo usermod -aG docker jenkins",
+            "sudo chmod 666 /var/run/docker.sock",
+            "sudo docker run -d --name sonarct -p 9000:9000 sonarqube",
+            "sudo rpm -ivh https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.rpm"
+        ]
+      
+    }
+    tags = {
+      Name = "jenkins terrafrom"
+    }
+  
 }
+
+resource "aws_instance" "appinst" {
+
+    ami = "ami-01edba92f9036f76e"
+    instance_type = "c7i-flex.large"
+    key_name = aws_key_pair.kp.key_name
+    subnet_id = aws_subnet.pubsnt.id
+    vpc_security_group_ids = [aws_security_group.appsg.id]
+
+    tags = {
+      Name = "my app terraform"
+    }
+  
+}
+
